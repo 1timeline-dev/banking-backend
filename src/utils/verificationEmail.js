@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendVerificationEmail = async (email, token) => {
-  const verificationLink = `http://localhost:5000/api/auth/verify-email/${token}`;
+  const verificationLink = `${process.env.API_URL}/api/auth/verify-email/${token}`;
 
   await transporter.sendMail({
     from: `"Online Banking" <${process.env.EMAIL_USER}>`,

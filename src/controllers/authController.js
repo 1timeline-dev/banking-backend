@@ -48,7 +48,7 @@ export const register = async (req, res) => {
     });
 
     // Send verification email
-    await sendVerificationEmail(user.email, verificationToken);
+    // await sendVerificationEmail(user.email, verificationToken);
 
     return res.status(201).json({
       success: true,
