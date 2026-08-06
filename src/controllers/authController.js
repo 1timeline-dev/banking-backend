@@ -48,8 +48,14 @@ export const register = async (req, res) => {
     });
 
     // Send verification email
-    // await sendVerificationEmail(user.email, verificationToken);
-
+    try {
+      console.log("📧 Sending verification email...");
+      await sendVerificationEmail(user.email, verificationToken);
+      console.log("✅ Verification email sent successfully.");
+    } catch (err) {
+      console.error("❌ Verification email failed:");
+      console.error(err);
+    }
     return res.status(201).json({
       success: true,
       message:
@@ -239,14 +245,13 @@ export const verifyEmail = async (req, res) => {
     user.verificationToken = null;
 
     await user.save();
-
     return res.status(200).send(`
-      <h2>Email Verified Successfully ✅</h2>
-      <p>Your account has been verified.</p>
-      <a href="http://localhost:5173/login">
-        Click here to login
-      </a>
-    `);
+  <h2>Email Verified Successfully ✅</h2>
+  <p>Your account has been verified.</p>
+  <a href="https://securetrust-bank-neon.vercel.app/login">
+    Click here to login
+  </a>
+`);
 
   } catch (error) {
     console.error(error);
