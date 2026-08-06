@@ -10,15 +10,35 @@ import statementRoutes from "./src/routes/statementRoutes.js";
 import beneficiaryRoutes from "./src/routes/beneficiaryRoutes.js";
 import uploadRoutes from "./src/routes/uploadRoutes.js";
 import publicRoutes from "./src/routes/publicRoutes.js";
+
 // Connect to MongoDB
 connectDB();
 
 const app = express();
+
 console.log("CLIENT_URL:", process.env.CLIENT_URL);
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true,
-}));
+
+// Allow both localhost and deployed frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL,
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow Postman and server-to-server requests
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

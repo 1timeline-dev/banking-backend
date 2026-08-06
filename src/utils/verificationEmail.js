@@ -8,10 +8,23 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Verify SMTP connection when the server starts
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ SMTP Error:", error);
+  } else {
+    console.log("✅ SMTP Server is ready");
+  }
+});
+
 export const sendVerificationEmail = async (email, token) => {
   const verificationLink = `${process.env.API_URL}/api/auth/verify-email/${token}`;
 
-  await transporter.sendMail({
+  console.log("📧 Sending verification email to:", email);
+  console.log("EMAIL_USER:", process.env.EMAIL_USER);
+  console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+
+  const info = await transporter.sendMail({
     from: `"Online Banking" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Verify Your Online Banking Account",
@@ -25,9 +38,7 @@ export const sendVerificationEmail = async (email, token) => {
 
         <div style="padding:30px;">
 
-          <h2 style="color:#111827;">
-            Welcome!
-          </h2>
+          <h2 style="color:#111827;">Welcome!</h2>
 
           <p style="font-size:16px;color:#374151;">
             Thank you for creating your Online Banking account.
@@ -79,4 +90,7 @@ export const sendVerificationEmail = async (email, token) => {
       </div>
     `,
   });
+
+  console.log("✅ Email sent successfully!");
+  console.log("Message ID:", info.messageId);
 };
