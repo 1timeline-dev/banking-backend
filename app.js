@@ -29,7 +29,9 @@ const allowedOrigins = [
 
 // Add process.env.CLIENT_URL if defined (supports comma-separated list)
 if (process.env.CLIENT_URL) {
-  const envOrigins = process.env.CLIENT_URL.split(",").map((url) => url.trim());
+  const envOrigins = process.env.CLIENT_URL.split(",").map((url) =>
+    url.trim().replace(/\/$/, "")
+  );
   envOrigins.forEach((url) => {
     if (url && !allowedOrigins.includes(url)) {
       allowedOrigins.push(url);
@@ -47,21 +49,23 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+    const cleanOrigin = origin.replace(/\/$/, "");
+
+    if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith(".vercel.app")) {
       console.log("✅ CORS allowed:", origin);
       return callback(null, true);
     }
 
-    console.log("❌ CORS blocked:", origin);
-    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    console.warn("⚠️ CORS blocked origin:", origin);
+    return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 
 // ================= MIDDLEWARE =================
 
