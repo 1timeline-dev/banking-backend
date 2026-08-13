@@ -1,96 +1,79 @@
-import nodemailer from "nodemailer";
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Verify SMTP connection when the server starts
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ SMTP Error:", error);
-  } else {
-    console.log("✅ SMTP Server is ready");
-  }
-});
+import transporter from "../../emailTransport.js";
 
 export const sendVerificationEmail = async (email, token) => {
-  const verificationLink = `${process.env.API_URL}/api/auth/verify-email/${token}`;
+  const verificationLink =
+    `${process.env.API_URL}/api/auth/verify-email/${token}`;
 
-  console.log("📧 Sending verification email to:", email);
-  console.log("EMAIL_USER:", process.env.EMAIL_USER);
-  console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+  console.log("📧 Sending email...");
+  console.log("TO:", email);
+  console.log("FROM:", process.env.EMAIL_USER);
 
-  const info = await transporter.sendMail({
-    from: `"Online Banking" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "Verify Your Online Banking Account",
+  try {
+    const info = await transporter.sendMail({
+      from: `"SecureTrust Bank" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Verify Your SecureTrust Bank Account",
 
-    html: `
-      <div style="max-width:600px;margin:auto;font-family:Arial,sans-serif;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:30px;">
+          <h1 style="color:#0d6efd;">SecureTrust Bank</h1>
 
-        <div style="background:#0d6efd;padding:20px;text-align:center;color:white;">
-          <h1 style="margin:0;">Online Banking</h1>
-        </div>
+          <h2>Welcome!</h2>
 
-        <div style="padding:30px;">
-
-          <h2 style="color:#111827;">Welcome!</h2>
-
-          <p style="font-size:16px;color:#374151;">
-            Thank you for creating your Online Banking account.
+          <p>
+            Thank you for creating your SecureTrust Bank account.
           </p>
 
-          <p style="font-size:16px;color:#374151;">
-            Please verify your email address by clicking the button below.
+          <p>
+            Please click the button below to verify your email address.
           </p>
 
-          <div style="text-align:center;margin:35px 0;">
+          <div style="margin:30px 0;">
             <a
               href="${verificationLink}"
               style="
                 background:#0d6efd;
-                color:#ffffff;
+                color:white;
+                padding:14px 25px;
                 text-decoration:none;
-                padding:14px 28px;
                 border-radius:6px;
                 display:inline-block;
-                font-weight:bold;
               "
             >
               Verify Email
             </a>
           </div>
 
-          <p style="color:#6b7280;">
-            If the button doesn't work, copy and paste this link into your browser:
+          <p>
+            If the button doesn't work, copy this link:
           </p>
 
           <p style="word-break:break-all;">
-            <a href="${verificationLink}">
-              ${verificationLink}
-            </a>
+            ${verificationLink}
           </p>
 
-          <hr style="margin:30px 0;border:none;border-top:1px solid #e5e7eb;">
+          <hr>
 
-          <p style="font-size:14px;color:#6b7280;">
-            If you did not create this account, you can safely ignore this email.
+          <p style="color:#777;font-size:13px;">
+            If you did not create this account, you can ignore this email.
           </p>
-
         </div>
+      `,
+    });
 
-        <div style="background:#f3f4f6;padding:15px;text-align:center;color:#6b7280;font-size:13px;">
-          © ${new Date().getFullYear()} Online Banking. All rights reserved.
-        </div>
+    console.log("=================================");
+    console.log("✅ EMAIL SENT!");
+    console.log("Message ID:", info.messageId);
+    console.log("Response:", info.response);
+    console.log("Accepted:", info.accepted);
+    console.log("Rejected:", info.rejected);
+    console.log("=================================");
 
-      </div>
-    `,
-  });
+    return info;
 
-  console.log("✅ Email sent successfully!");
-  console.log("Message ID:", info.messageId);
+  } catch (error) {
+    console.error("❌ EMAIL FAILED!");
+    console.error(error);
+    throw error;
+  }
 };

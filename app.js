@@ -11,43 +11,73 @@ import beneficiaryRoutes from "./src/routes/beneficiaryRoutes.js";
 import uploadRoutes from "./src/routes/uploadRoutes.js";
 import publicRoutes from "./src/routes/publicRoutes.js";
 
-// Connect to MongoDB
+// ================= CONNECT TO MONGODB =================
+
 connectDB();
 
 const app = express();
 
-console.log("CLIENT_URL:", process.env.CLIENT_URL);
+// ================= CORS =================
 
-// Allow both localhost and deployed frontend
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL,
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "https://banking-frontend-bay.vercel.app",
+  "https://securetrust-bank-neon.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow Postman and server-to-server requests
-      if (!origin) return callback(null, true);
+// Add process.env.CLIENT_URL if defined (supports comma-separated list)
+if (process.env.CLIENT_URL) {
+  const envOrigins = process.env.CLIENT_URL.split(",").map((url) => url.trim());
+  envOrigins.forEach((url) => {
+    if (url && !allowedOrigins.includes(url)) {
+      allowedOrigins.push(url);
+    }
+  });
+}
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+console.log("CLIENT_URL env:", process.env.CLIENT_URL);
+console.log("Allowed CORS origins:", allowedOrigins);
 
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests without an Origin header (Postman, curl, server-to-server, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      console.log("✅ CORS allowed:", origin);
+      return callback(null, true);
+    }
+
+    console.log("❌ CORS blocked:", origin);
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+// ================= MIDDLEWARE =================
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ================= TEST ROUTE =================
+
 app.get("/", (req, res) => {
   res.json({
+    success: true,
     message: "Online Banking API is running 🚀",
   });
 });
+
+// ================= ROUTES =================
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
@@ -57,6 +87,8 @@ app.use("/api/user/beneficiaries", beneficiaryRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/public", publicRoutes);
 
+// ================= 404 =================
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -64,8 +96,28 @@ app.use((req, res) => {
   });
 });
 
+// ================= ERROR HANDLER =================
+
+app.use((err, req, res, next) => {
+  console.error("❌ SERVER ERROR:", err.message);
+
+  if (err.message?.includes("not allowed by CORS")) {
+    return res.status(403).json({
+      success: false,
+      message: "CORS error: origin not allowed",
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+});
+
+// ================= SERVER =================
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });

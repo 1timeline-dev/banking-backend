@@ -1,16 +1,8 @@
-import nodemailer from "nodemailer";
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+import transporter from "../../emailTransport.js";
 
 export const sendResetPasswordEmail = async (email, token) => {
   try {
-    const resetLink = `http://localhost:5173/reset-password/${token}`;
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
 
     const info = await transporter.sendMail({
       from: process.env.EMAIL_USER,
